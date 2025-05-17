@@ -120,6 +120,15 @@ bot.on('message', async (msg) => {
     if (!state) return;
 
     if (state.step === 'awaiting_identifier_search') {
+        const validPlate = /^[A-Z]{2}\d{4}[A-Z]{2}$/;
+        const validNickname = /^@[\w\d_]{5,}$/;
+
+        if (!validPlate.test(text.toUpperCase()) && !validNickname.test(text)) {
+            return bot.sendMessage(chatId,
+                'Неправильний формат! Введіть номер авто (наприклад, AB1234CD) або @нікнейм користувача.',
+                { parse_mode: 'Markdown' });
+        }
+
         return showReviews(chatId, text.toUpperCase());
     }
 
