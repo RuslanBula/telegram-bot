@@ -169,7 +169,6 @@ bot.on('message', async (msg) => {
 async function saveReview(identifier, reviewText, userId) {
     try {
         const lastReview = await Review.findOne({
-            identifier,
             userId,
             timestamp: { $gte: new Date(Date.now() - WAIT_TIME) }
         }).sort({ timestamp: -1 });
