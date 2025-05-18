@@ -199,22 +199,29 @@ async function saveReview(identifier, reviewText, userId) {
 }
 
 // Показ відгуків
+// Показ відгуків + статистика (кількість)
 async function showReviews(chatId, identifier) {
     try {
-        const reviews = await Review.find({ identifier })
-            .sort({ timestamp: -1 })
-            .limit(LIMIT);
+        const allReviews = await Review.find({ identifier }).sort({ timestamp: -1 });
+        const total = allReviews.length;
 
-        if (reviews.length === 0) {
+        if (total === 0) {
             await bot.sendMessage(chatId, 'Відгуків не знайдено 🙅‍♂️');
         } else {
-            let message = `Ось, які відгуки ми знайшли..\n`;
-            reviews.forEach((review) => {
-                message += `📍«${review.review}»\n`;
+            let message = `Статистика💡\n• Всього відгуків: ${total} 📍\n\nОсь, які відгуки ми знайшли:\n`;
+
+            // Показуємо лише останні LIMIT відгуків
+            const latestReviews = allReviews.slice(0, LIMIT);
+            latestReviews.forEach((review) => {
+                if (review.review?.trim()) {
+                    message += `📍 «${review.review.trim()}»\n`;
+                }
             });
+
             await bot.sendMessage(chatId, message);
         }
-        // Через 3 секунди повернути меню
+
+        // Повернення до меню через 3 секунди
         setTimeout(() => {
             sendMainMenu(chatId);
         }, 3000);
