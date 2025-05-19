@@ -24,6 +24,13 @@ const LIMIT = 3;
 const WAIT_TIME = 4 * 60 * 60 * 1000; // 4 години
 
 // Кеш станів користувачів
+function normalizeIdentifier(input) {
+    const text = input.toString().trim();
+    if (/^\d{4}$/.test(text)) {
+        return text;
+    }
+    return text.toUpperCase().replace(/^@/, '');
+}
 const userStates = new Map();
 
 // Функція головного меню
@@ -56,13 +63,12 @@ async function saveReview(identifier, reviewText, userId, rating) {
         if (lastReview) return false;
 
         await Review.create({
-            identifier,
+            identifier: normalizeIdentifier(identifier),
             review: reviewText,
             userId,
             rating,
             timestamp: new Date()
         });
-
         return true;
     } catch (err) {
         console.error('Помилка збереження відгуку:', err);
@@ -184,7 +190,7 @@ bot.on('callback_query', async (query) => {
         });
 
         return bot.sendMessage(chatId,
-            `Підтверджуєте надсилання ${state.rating}⭐️ без текстового коментаря?:`,
+            `Підтверджуєте надсилання ${state.rating}⭐️ без текстового коментаря?`,
             {
                 reply_markup: {
                     inline_keyboard: [
@@ -207,7 +213,7 @@ bot.on('message', async (msg) => {
         if (text === 'Знайти інформацію🔎') {
             userStates.set(chatId, { step: 'awaiting_identifier_search' });
             return bot.sendMessage(chatId,
-                'Введіть номер авто (Великими, англійськими літерами, наприклад, AB1234CD) або @нікнейм користувача, щоб переглянути відгуки.',
+                'Введіть номер авто (Великими, англійськими літерами, наприклад, AB1234CD) або @нікнейм користувача чи 4 цифри, щоб переглянути відгуки.',
                 { parse_mode: 'Markdown', reply_markup: { remove_keyboard: true } });
         }
 
@@ -231,20 +237,27 @@ bot.on('message', async (msg) => {
 
     const validPlate = /^[A-Z]{2}\d{4}[A-Z]{2}$/;
     const validNickname = /^@[\w\d_]{5,}$/;
+    const validFourDigits = /^\d{4}$/;
+
+    function isValidIdentifier(text) {
+        return validPlate.test(text.toUpperCase())
+            || validNickname.test(text)
+            || validFourDigits.test(text);
+    }
 
     if (state.step === 'awaiting_identifier_search') {
-        if (!validPlate.test(text.toUpperCase()) && !validNickname.test(text)) {
+        if (!isValidIdentifier(text)) {
             return bot.sendMessage(chatId,
-                'Неправильний формат! Введіть номер авто (наприклад, AB1234CD) або @нікнейм користувача.',
+                'Неправильний формат! Введіть номер авто (наприклад, AB1234CD) або @нікнейм користувача чи 4 цифри.',
                 { parse_mode: 'Markdown' });
         }
         return showReviews(chatId, text.toUpperCase());
     }
 
     if (state.step === 'awaiting_identifier_review') {
-        if (!validPlate.test(text.toUpperCase()) && !validNickname.test(text)) {
+        if (!isValidIdentifier(text)) {
             return bot.sendMessage(chatId,
-                'Неправильний формат! Введіть номер авто (наприклад, AB1234CD) або @нікнейм користувача.',
+                'Неправильний формат! Введіть номер авто (наприклад, AB1234CD) або @нікнейм користувача чи 4 цифри.',
                 { parse_mode: 'Markdown' });
         }
 
