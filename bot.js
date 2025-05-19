@@ -220,7 +220,7 @@ bot.on('message', async (msg) => {
         if (text === 'Залишити відгук⭐') {
             userStates.set(chatId, { step: 'awaiting_identifier_review' });
             return bot.sendMessage(chatId,
-                'Щоб залишити відгук, введіть номер авто (Великими, англійськими літерами, наприклад AB1234CD) або @нікнейм користувача.',
+                'Щоб залишити відгук, введіть номер авто (Великими, англійськими літерами, наприклад AB1234CD) або @нікнейм користувача чи 4 цифри.',
                 { parse_mode: 'Markdown', reply_markup: { remove_keyboard: true } });
         }
 
