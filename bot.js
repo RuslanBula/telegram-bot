@@ -79,7 +79,7 @@ async function saveReview(identifier, reviewText, userId, rating) {
 // Показ відгуків та статистики
 async function showReviews(chatId, identifier) {
     try {
-        const allReviews = await Review.find({ identifier }).sort({ timestamp: -1 });
+        const allReviews = await Review.find({ identifier: normalizeIdentifier(identifier) }).sort({ timestamp: -1 });
         const total = allReviews.length;
 
         if (total === 0) {
@@ -222,7 +222,7 @@ bot.on('message', async (msg) => {
             return bot.sendMessage(chatId,
                 'Щоб залишити відгук, введіть номер авто (Великими, англійськими літерами, наприклад AB1234CD) або @нікнейм користувача чи 4 цифри.',
                 { parse_mode: 'Markdown', reply_markup: { remove_keyboard: true } });
-        }
+        } 
 
         if (text === 'Підтримка⚙') {
             return bot.sendMessage(chatId, 'Звʼяжіться з підтримкою: @aaghsnnn');
@@ -251,8 +251,7 @@ bot.on('message', async (msg) => {
                 'Неправильний формат! Введіть номер авто (наприклад, AB1234CD) або @нікнейм користувача чи 4 цифри.',
                 { parse_mode: 'Markdown' });
         }
-        return showReviews(chatId, text.toUpperCase());
-    }
+        return showReviews(chatId, normalizeIdentifier(text));    }
 
     if (state.step === 'awaiting_identifier_review') {
         if (!isValidIdentifier(text)) {
