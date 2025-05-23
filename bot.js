@@ -29,7 +29,10 @@ function normalizeIdentifier(input) {
     if (/^\d{4}$/.test(text)) {
         return text;
     }
-    return text.toUpperCase().replace(/^@/, '');
+    if (text.startsWith('@')) {
+        return '@' + text.slice(1).toLowerCase(); // зберігаємо з @, робимо нижній регістр
+    }
+    return text.toUpperCase(); // для номерів авто великими літерами
 }
 const userStates = new Map();
 
