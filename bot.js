@@ -29,10 +29,10 @@ function normalizeIdentifier(input) {
     if (/^\d{4}$/.test(text)) {
         return text;
     }
-    if (text.startsWith('@')) {
-        return '@' + text.slice(1).toLowerCase(); // зберігаємо з @, робимо нижній регістр
+    if (/^@[\w\d_]{5,}$/.test(text)) {
+        return text.toLowerCase(); // або .toUpperCase()
     }
-    return text.toUpperCase(); // для номерів авто великими літерами
+    return text.toUpperCase();
 }
 const userStates = new Map();
 
@@ -338,35 +338,26 @@ bot.on('message', async (msg) => {
     message = `Статистика💡\n• Всього відгуків: ${total} 📍\n• Середня оцінка: ${averageRating.toFixed(1)}⭐️\n\nОсь, які відгуки ми знайшли:\n`;
     async function showReviews(chatId, identifier) {
         try {
-            const allReviews = await Review.find({ identifier }).sort({ timestamp: -1 });
+            const normId = normalizeIdentifier(identifier); // ДОДАНО
+            const allReviews = await Review.find({ identifier: normId }).sort({ timestamp: -1 });
             const total = allReviews.length;
 
             if (total === 0) {
                 await bot.sendMessage(chatId, 'Відгуків не знайдено 🙅‍♂️');
             } else {
-                const ratings = allReviews
-                    .map(r => parseFloat(r.rating))
-                    .filter(r => !isNaN(r));
+                const ratings = allReviews.map(r => parseFloat(r.rating)).filter(r => !isNaN(r));
+                const avg = ratings.length ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length : 0;
 
-                const totalRatings = ratings.length;
-                const averageRating = totalRatings > 0
-                    ? ratings.reduce((sum, r) => sum + r, 0) / totalRatings
-                    : 0;
-
-                let message = `Статистика💡\n\n• Рейтинг: ${averageRating.toFixed(1)}⭐️\n• Всього відгуків: ${total} 📍\n\n`;
+                let message = `Статистика💡\n• Рейтинг: ${avg.toFixed(1)}⭐️\n• Всього відгуків: ${total} 📍\n\n`;
                 message += 'Ось, які відгуки ми знайшли:\n\n';
 
-                const latestReviews = allReviews.filter(r => r.review && r.review.trim());                latestReviews.forEach((review) => {
-                    if (review.review && review.review.trim()) {
-                        message += `📍 «${review.review.trim()}»\n`;
-                    }
-                });
+                const latestReviews = allReviews.filter(r => r.review && r.review.trim()).slice(0, LIMIT);
+                latestReviews.forEach(r => message += `📍 «${r.review.trim()}»\n`);
 
                 await bot.sendMessage(chatId, message);
             }
 
-            // Повернення до головного меню
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await new Promise(r => setTimeout(r, 2000));
             return sendMainMenu(chatId);
 
         } catch (err) {
